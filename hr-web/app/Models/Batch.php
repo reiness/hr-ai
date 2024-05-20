@@ -19,5 +19,11 @@ class Batch extends Model
     public function cvs()
     {
         return $this->hasMany(Cv::class);
+        
+    }
+
+    public function processedBatches()
+    {
+        return $this->hasMany(ProcessedBatch::class);
     }
 }

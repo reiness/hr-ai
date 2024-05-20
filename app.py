@@ -1,29 +1,58 @@
 from flask import Flask, request, jsonify
-from pdfminer.high_level import extract_text
- 
+import os
+import logging
 
 app = Flask(__name__)
-def extract_text_from_pdf(pdf_path):
-    return extract_text(pdf_path)
 
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
 
+# Base directory for the Laravel storage
+LARAVEL_STORAGE_BASE = "D:\\coding-project\\hr-ai\\hr-web\\storage\\app\\public\\cvs"
 
+def get_pdf_size(relative_path):
+    try:
+        full_path = os.path.join(LARAVEL_STORAGE_BASE, relative_path)
+        app.logger.debug(f"Checking size for: {full_path}")
 
+        if os.path.exists(full_path):
+            app.logger.debug(f"File exists: {full_path}")
+            size = os.path.getsize(full_path)
+            app.logger.debug(f"Size of {full_path}: {size}")
+            return size
+        else:
+            app.logger.error(f"File not found: {full_path}")
+            return 0
+    except Exception as e:
+        app.logger.error(f"Error getting size for {full_path}: {e}")
+        return 0
 
-@app.route('/predict', methods=['POST'])
-def predict():
+@app.route('/process', methods=['POST'])
+def process():
     # Extract data from request
     data = request.get_json()
+    app.logger.debug(f"Received data: {data}")
 
+    if not data or 'cvs' not in data:
+        return jsonify({"error": "Invalid data"}), 400
 
-    A = int(data.get('A'))
-    B = int(data.get('B'))
-    C = int(data.get('C'))
+    cvs = data.get('cvs', [])
+    app.logger.debug(f"CVs before processing: {cvs}")
 
-    prediction = A + B + C
+    # Process the data: sort PDFs by their size
+    for cv in cvs:
+        cv['size'] = get_pdf_size(cv['file_path'])
+        app.logger.debug(f"Processed CV: {cv}")
+
+    sorted_cvs = sorted(cvs, key=lambda x: x['size'])
+    app.logger.debug(f"Sorted CVs: {sorted_cvs}")
 
     # Prepare response
-    response = {'prediction': prediction}
+    response = {
+        'batch_id': data.get('batch_id'),
+        'sorted_cvs': sorted_cvs
+    }
+    app.logger.debug(f"Response: {response}")
 
     return jsonify(response), 200
 

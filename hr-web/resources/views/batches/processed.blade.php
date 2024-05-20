@@ -2,13 +2,15 @@
 
 @section('content')
 <h2>Processed Batches</h2>
-@if ($batches->isEmpty())
+@if ($processedBatches->isEmpty())
     <p>No processed batches found.</p>
 @else
     <ul class="list-group">
-        @foreach ($batches as $batch)
+        @foreach ($processedBatches as $processedBatch)
             <li class="list-group-item">
-                <a href="{{ route('batches.show', $batch->id) }}">{{ $batch->name }}</a>
+                <a href="{{ route('processedBatches.show', $processedBatch->id) }}">
+                    {{ $processedBatch->batch->name }}_{{ $processedBatch->user_input }}
+                </a>
             </li>
         @endforeach
     </ul>

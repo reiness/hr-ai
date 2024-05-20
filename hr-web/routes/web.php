@@ -1,9 +1,7 @@
 <?php
 
-use App\Http\Controllers\TestingController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BatchController;
-use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,14 +28,13 @@ Route::middleware([
         return view('dashboard');
     })->name('dashboard');
 
-    Route::post('/test', [TestingController::class, 'predict'])->name('test.predict');
-
     Route::get('/batches', [BatchController::class, 'index'])->name('batches.index');
     Route::post('/batches', [BatchController::class, 'createBatch'])->name('batches.create');
     Route::post('/batches/{batch}/cvs', [BatchController::class, 'uploadCVs'])->name('batches.upload');
     Route::get('/batches/{batch}', [BatchController::class, 'showBatch'])->name('batches.show');
 
-    // Custom profile route
-    Route::get('/user/profile', [ProfileController::class, 'show'])->name('profile.show');
+    // Routes for processing batches
     Route::get('/processed-batches', [BatchController::class, 'processedBatches'])->name('batches.processed');
+    Route::post('/batches/{batch}/process', [BatchController::class, 'processBatch'])->name('batches.process');
+    Route::get('/processed-batches/{processedBatch}', [BatchController::class, 'showProcessedBatch'])->name('processedBatches.show');
 });
