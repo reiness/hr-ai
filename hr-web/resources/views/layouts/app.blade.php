@@ -14,6 +14,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('batches.index') }}">Batches</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('batches.processed') }}">Processed Batches</a>
+                </li>
             </ul>
         </div>
     </nav>

@@ -58,4 +58,11 @@ class BatchController extends Controller
         $batch = Auth::user()->batches()->with('cvs')->findOrFail($batchId);
         return view('batches.show', compact('batch'));
     }
+
+    // New method for processed batches
+    public function processedBatches()
+    {
+        $batches = Auth::user()->batches()->where('processed', true)->get();
+        return view('batches.processed', compact('batches'));
+    }
 }

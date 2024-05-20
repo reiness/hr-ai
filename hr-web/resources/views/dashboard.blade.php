@@ -8,6 +8,7 @@
             <p>Welcome to your dashboard!</p>
             <p>You can manage your batches and CVs here.</p>
             <a href="{{ route('batches.index') }}" class="mt-4 btn btn-primary">Manage Batches</a>
+            <a href="{{ route('batches.processed') }}" class="mt-4 btn btn-primary">Processed Batches</a>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-md">
             <h2 class="text-2xl font-semibold mb-4">Profile</h2>

@@ -39,4 +39,5 @@ Route::middleware([
 
     // Custom profile route
     Route::get('/user/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/processed-batches', [BatchController::class, 'processedBatches'])->name('batches.processed');
 });
