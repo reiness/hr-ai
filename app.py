@@ -8,13 +8,16 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 # Base directory for the Laravel storage
-LARAVEL_STORAGE_BASE = "D:\\coding-project\\hr-ai\\hr-web\\storage\\app\\public\\cvs"
+LARAVEL_STORAGE_BASE = "D:\\coding-project\\hr-ai\\hr-web\\storage\\app\\public"
 
 def get_pdf_size(relative_path):
     try:
+        # Remove any leading slashes in relative_path
+        relative_path = relative_path.lstrip('/')
         full_path = os.path.join(LARAVEL_STORAGE_BASE, relative_path)
         app.logger.debug(f"Checking size for: {full_path}")
 
+        # Check if the constructed path is correct
         if os.path.exists(full_path):
             app.logger.debug(f"File exists: {full_path}")
             size = os.path.getsize(full_path)
