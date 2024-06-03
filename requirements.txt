@@ -1,1 +1,7 @@
-import flask
+flask
+nltk
+import scikit-learn
+gensim
+numpy
+rank_bm25
+PyPDF2

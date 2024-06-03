@@ -10,7 +10,7 @@
         @foreach ($sortedCvs as $cv)
             <li class="list-group-item">
                 <a href="{{ Storage::url($cv['file_path']) }}" target="_blank">{{ basename($cv['file_path']) }}</a>
-                <span class="badge badge-info">Size: {{ $cv['size'] }} bytes</span>
+                <span class="badge badge-info">Score: {{ $cv['combined_score'] }}</span>
             </li>
         @endforeach
     </ul>
