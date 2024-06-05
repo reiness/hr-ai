@@ -188,10 +188,10 @@ class BatchController extends Controller
     
         // Check if the processed batch has associated files (based on your application logic)
         // For example, checking if the result is not empty
-        if (!empty($processedBatch->result)) {
+        if (!empty($processedBatch->result) && $processedBatch->result !== '[]') {
             return redirect()->route('batches.processed')->with('error', 'Cannot delete processed batch with files.');
         }
-    
+        
         $processedBatch->delete();
     
         return redirect()->route('batches.processed')->with('success', 'Processed batch deleted successfully.');

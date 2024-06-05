@@ -7,6 +7,7 @@
     <p>No CVs found.</p>
 @else
 <a href="{{ route('processedBatches.downloadAll', $processedBatch->id) }}" class="btn btn-info mt-4">Download All CVs</a>
+<a href="{{ route('processedBatches.summarize', $processedBatch->id) }}" class="btn btn-primary mt-4">Summarize Top 3</a>
     <form action="{{ route('processedBatches.deleteCVs', $processedBatch->id) }}" method="POST" id="delete-cvs-form">
         @csrf
         @method('DELETE')

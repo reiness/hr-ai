@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BatchController;
+use App\Http\Controllers\GeminiController;
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -45,6 +48,5 @@ Route::middleware([
     Route::delete('/processedBatches/{id}/cvs', [BatchController::class, 'deleteProcessedCVs'])->name('processedBatches.deleteCVs');
     Route::get('/processedBatches/{id}/downloadAll', [BatchController::class, 'downloadAllProcessed'])->name('processedBatches.downloadAll');
 
-
-    
+    Route::get('/processedBatches/{id}/summarize', [GeminiController::class, 'summarizeTop3'])->name('processedBatches.summarize');
 });

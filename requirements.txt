@@ -1,7 +1,9 @@
 flask
 nltk
-import scikit-learn
+scikit-learn
 gensim
 numpy
 rank_bm25
 PyPDF2
+google-generativeai
+textwrap
