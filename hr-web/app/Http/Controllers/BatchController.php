@@ -9,7 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use App\Services\FlaskApiService;
-use Illuminate\Support\Facades\Log; 
+use Illuminate\Support\Facades\Log;
+use ZipArchive;
 
 class BatchController extends Controller
 {
@@ -42,7 +43,7 @@ class BatchController extends Controller
     public function uploadCVs(Request $request, $batchId)
     {
         $request->validate([
-            'cvs.*' => 'required|file|mimes:pdf|max:102400 ', //100mb 
+            'cvs.*' => 'required|file|mimes:pdf|max:102400', // 100mb
         ]);
 
         $batch = Auth::user()->batches()->findOrFail($batchId);
@@ -82,14 +83,14 @@ class BatchController extends Controller
     {
         $processedBatch = ProcessedBatch::with('batch')->findOrFail($processedBatchId);
         $sortedCvs = json_decode($processedBatch->result, true);
-        
+
         return view('batches.show_processed', compact('processedBatch', 'sortedCvs'));
     }
 
     public function processBatch(Request $request, $batchId)
     {
         $batch = Batch::with('cvs')->findOrFail($batchId);
-    
+
         // Prepare batch data for processing
         $batchData = [
             'batch_id' => $batch->id,
@@ -101,13 +102,13 @@ class BatchController extends Controller
             })->toArray(),
             'user_input' => $request->input('user_input'), // Use user input as processed batch name
         ];
-    
+
         // Debugging: Log the batch data being sent to Flask
         Log::debug('Batch data being sent to Flask:', $batchData);
-    
+
         // Call Flask API to process the batch
         $result = $this->flaskApiService->processBatch($batchData);
-    
+
         if ($result) {
             // Save processed results
             ProcessedBatch::create([
@@ -117,12 +118,136 @@ class BatchController extends Controller
                 'status' => 'processed',
                 'result' => json_encode($result['sorted_cvs']),
             ]);
-    
+
             return redirect()->route('batches.processed')->with('success', 'Batch processed successfully.');
         } else {
             return redirect()->route('batches.show', $batchId)->with('error', 'Failed to process batch.');
         }
     }
-    
 
+    public function destroy($id)
+    {
+        $batch = Auth::user()->batches()->with('cvs')->findOrFail($id);
+    
+        if ($batch->cvs->isNotEmpty()) {
+            return redirect()->route('batches.index')->with('error', 'Cannot delete batch with CVs.');
+        }
+    
+        $batch->delete();
+    
+        return redirect()->route('batches.index')->with('success', 'Batch deleted successfully.');
+    }
+
+    public function deleteCVs(Request $request, $batchId)
+    {
+        $batch = Auth::user()->batches()->findOrFail($batchId);
+
+        $cvIds = $request->input('cvs');
+        if (!$cvIds) {
+            return redirect()->route('batches.show', $batchId)->with('error', 'No CVs selected.');
+        }
+
+        foreach ($cvIds as $cvId) {
+            $cv = Cv::where('batch_id', $batchId)->findOrFail($cvId);
+            Storage::disk('public')->delete($cv->file_path);
+            $cv->delete();
+        }
+
+        return redirect()->route('batches.show', $batchId)->with('success', 'Selected CVs deleted successfully.');
+    }
+
+    public function downloadAll($batchId)
+    {
+        $batch = Auth::user()->batches()->with('cvs')->findOrFail($batchId);
+    
+        if ($batch->cvs->isEmpty()) {
+            return redirect()->route('batches.show', $batchId)->with('error', 'No CVs found in this batch.');
+        }
+    
+        // Sanitize the batch name for use as a filename
+        $safeBatchName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $batch->name);
+        $zipFileName = $safeBatchName . '_cvs.zip';
+        $zipPath = storage_path('app/public/' . $zipFileName);
+    
+        $zip = new ZipArchive;
+    
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            foreach ($batch->cvs as $cv) {
+                $zip->addFile(storage_path('app/public/' . $cv->file_path), basename($cv->file_path));
+            }
+            $zip->close();
+        }
+    
+        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
+    }
+
+    // New function to delete processed batches
+    public function destroyProcessedBatch($id)
+    {
+        $processedBatch = ProcessedBatch::with('batch')->findOrFail($id);
+    
+        // Check if the processed batch has associated files (based on your application logic)
+        // For example, checking if the result is not empty
+        if (!empty($processedBatch->result)) {
+            return redirect()->route('batches.processed')->with('error', 'Cannot delete processed batch with files.');
+        }
+    
+        $processedBatch->delete();
+    
+        return redirect()->route('batches.processed')->with('success', 'Processed batch deleted successfully.');
+    }
+
+    // Function to delete selected CVs from a processed batch
+    public function deleteProcessedCVs(Request $request, $processedBatchId)
+    {
+        $processedBatch = ProcessedBatch::with('batch')->findOrFail($processedBatchId);
+
+        $cvIds = $request->input('cvs');
+        if (!$cvIds) {
+            return redirect()->route('processedBatches.show', $processedBatchId)->with('error', 'No CVs selected.');
+        }
+
+        $sortedCvs = json_decode($processedBatch->result, true);
+
+        foreach ($cvIds as $cvId) {
+            $cvKey = array_search($cvId, array_column($sortedCvs, 'id'));
+            if ($cvKey !== false) {
+                Storage::disk('public')->delete($sortedCvs[$cvKey]['file_path']);
+                unset($sortedCvs[$cvKey]);
+            }
+        }
+
+        // Re-save the sorted CVs without the deleted ones
+        $processedBatch->result = json_encode(array_values($sortedCvs));
+        $processedBatch->save();
+
+        return redirect()->route('processedBatches.show', $processedBatchId)->with('success', 'Selected CVs deleted successfully.');
+    }
+
+    // Function to download all CVs from a processed batch
+    public function downloadAllProcessed($processedBatchId)
+    {
+        $processedBatch = ProcessedBatch::with('batch')->findOrFail($processedBatchId);
+        $sortedCvs = json_decode($processedBatch->result, true);
+
+        if (empty($sortedCvs)) {
+            return redirect()->route('processedBatches.show', $processedBatchId)->with('error', 'No CVs found in this batch.');
+        }
+
+        // Sanitize the processed batch name for use as a filename
+        $safeBatchName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $processedBatch->name);
+        $zipFileName = $safeBatchName . '_cvs.zip';
+        $zipPath = storage_path('app/public/' . $zipFileName);
+
+        $zip = new ZipArchive;
+
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            foreach ($sortedCvs as $cv) {
+                $zip->addFile(storage_path('app/public/' . $cv['file_path']), basename($cv['file_path']));
+            }
+            $zip->close();
+        }
+
+        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
+    }
 }

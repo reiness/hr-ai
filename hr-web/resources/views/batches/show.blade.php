@@ -6,13 +6,20 @@
 @if ($batch->cvs->isEmpty())
     <p>No CVs found.</p>
 @else
-    <ul class="list-group">
-        @foreach ($batch->cvs as $cv)
-            <li class="list-group-item">
-                <a href="{{ Storage::url($cv->file_path) }}" target="_blank">{{ basename($cv->file_path) }}</a>
-            </li>
-        @endforeach
-    </ul>
+<a href="{{ route('batches.downloadAll', $batch->id) }}" class="btn btn-info mt-4">Download All CVs</a>
+    <form action="{{ route('cvs.delete', $batch->id) }}" method="POST" id="delete-cvs-form">
+        @csrf
+        @method('DELETE')
+        <ul class="list-group">
+            @foreach ($batch->cvs as $cv)
+                <li class="list-group-item flex justify-between items-center">
+                    <a href="{{ Storage::url($cv->file_path) }}" target="_blank">{{ basename($cv->file_path) }}</a>
+                    <input type="checkbox" name="cvs[]" value="{{ $cv->id }}" class="cv-checkbox">
+                </li>
+            @endforeach
+        </ul>
+        <button type="submit" class="btn btn-danger mt-4" id="delete-selected-cvs-btn">Delete Selected CVs</button>
+    </form>
 @endif
 
 <h2 class="mt-4">Upload CVs</h2>
