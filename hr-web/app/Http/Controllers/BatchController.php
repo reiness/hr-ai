@@ -208,17 +208,18 @@ class BatchController extends Controller
         }
 
         $sortedCvs = json_decode($processedBatch->result, true);
+        $remainingCvs = [];
 
-        foreach ($cvIds as $cvId) {
-            $cvKey = array_search($cvId, array_column($sortedCvs, 'id'));
-            if ($cvKey !== false) {
-                Storage::disk('public')->delete($sortedCvs[$cvKey]['file_path']);
-                unset($sortedCvs[$cvKey]);
+        foreach ($sortedCvs as $cv) {
+            if (!in_array($cv['id'], $cvIds)) {
+                $remainingCvs[] = $cv;
+            } else {
+                Storage::disk('public')->delete($cv['file_path']);
             }
         }
 
         // Re-save the sorted CVs without the deleted ones
-        $processedBatch->result = json_encode(array_values($sortedCvs));
+        $processedBatch->result = json_encode($remainingCvs);
         $processedBatch->save();
 
         return redirect()->route('processedBatches.show', $processedBatchId)->with('success', 'Selected CVs deleted successfully.');
