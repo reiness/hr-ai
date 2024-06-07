@@ -20,7 +20,7 @@ app = Flask(__name__)
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Base directory for the Laravel storage
+# NEEDS TO BE CHANGED IN PRODUCTION
 LARAVEL_STORAGE_BASE = "D:\\coding-project\\hr-ai\\hr-web\\storage\\app\\public"
 
 # Preprocessing

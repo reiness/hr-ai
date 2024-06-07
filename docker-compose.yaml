@@ -3,34 +3,22 @@ version: '3.8'
 services:
   flask-app:
     build:
-      context: .  # Path to your root folder containing app.py and Dockerfile
+      context: .  # Path flask app.py
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
-    depends_on:
-      - db
+
 
   laravel-app:
     build:
-      context: ./hr-web  # Path to your hr-web directory containing the Laravel Dockerfile
+      context: ./hr-web  # Path LARAVEL
       dockerfile: Dockerfile
     ports:
       - "9000:9000"
     volumes:
       - ./hr-web:/var/www
-    depends_on:
-      - db
 
-  db:
-    image: mysql:5.7
-    restart: always
-    environment:
-      MYSQL_DATABASE: sphinx
-      MYSQL_USER: hr-usser
-      MYSQL_PASSWORD: hr-password
-      MYSQL_ROOT_PASSWORD: hr-root
-    volumes:
-      - db_data:/var/lib/mysql
+
 
 volumes:
   db_data:
