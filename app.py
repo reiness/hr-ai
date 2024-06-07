@@ -11,15 +11,9 @@ from gensim.matutils import corpus2csc
 import numpy as np
 from rank_bm25 import BM25Okapi
 from PyPDF2 import PdfReader
-
-# gemini
-import pathlib
-import textwrap
 import google.generativeai as genai
-from IPython.display import display
 from IPython.display import Markdown
-
-
+import textwrap
 
 app = Flask(__name__)
 
@@ -32,9 +26,6 @@ LARAVEL_STORAGE_BASE = "D:\\coding-project\\hr-ai\\hr-web\\storage\\app\\public"
 # Preprocessing
 nltk.download('stopwords')
 stop_words = set(stopwords.words('english'))
-
-
-
 
 json_format = """
 Format JSON ini tidak pakem, tergantung berapa CV yang diproses. Satu CV adalah satu objek yang berbeda dan terdapat 1 objek inti yaitu comparison.
@@ -150,17 +141,15 @@ Formatnya adalah sebagai berikut
 }
 
 """
-def to_markdown(text):
-  text = text.replace('•', '  *')
-  return Markdown(textwrap.indent(text, '> ', predicate=lambda _: True))
 
+def to_markdown(text):
+    text = text.replace('•', '  *')
+    return Markdown(textwrap.indent(text, '> ', predicate=lambda _: True))
 
 def generate_summary(api_key, base_prompt):
-    
-    genai.configure(api_key=api_key)   
+    genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-1.5-flash')
     response = model.generate_content(base_prompt)
-    # resp = to_markdown(response.text)
     return response.text
 
 def preprocess(text):
@@ -259,10 +248,6 @@ def process():
 
     return jsonify(response), 200
 
-
-
-
-
 @app.route('/gemini', methods=['POST'])
 def gemini():
     data = request.get_json()
@@ -275,14 +260,13 @@ def gemini():
     cvs = data['cvs']
     cv_texts = []
 
-
     for cv in cvs:
         pdf_content = read_pdf_content(cv['file_path'])
         if pdf_content:
             cv_texts.append(pdf_content)
-    print("DEBUGGG[0]", cv_texts[0])
-    print("DEBUGGG[1]", cv_texts[1])
-    print("DEBUGGG[2]", cv_texts[2])
+
+    if len(cv_texts) < 3:
+        return jsonify({"error": "Insufficient CV content"}), 400
 
     base_prompt = f"""
 Ringkaslah kumpulan CV berikut ini serta komparasikan mereka.
@@ -292,19 +276,10 @@ Format JSON nya adalah sebagai berikut: {json_format} .
 Jika ada kasus data tidak ada, maka buat nilai dalam JSON tersebut Unknown.
 JANGAN MENAMPILKAN HASIL LAIN SELAIN JSON!
 """
-    # Process with Google Gemini (using main.ipynb logic)
-    summaries = []
-    summary = generate_summary(api_key, base_prompt)  # Pass the API key to the function
-    summaries.append(summary)
+    summary = generate_summary(api_key, base_prompt)
+    response = {"summaries": [summary.strip()]} 
 
-    response = {
-        'summaries': summaries
-    }
-
-    # return jsonify(response), 200
-    return response
-
-
+    return jsonify(response), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
