@@ -1,37 +1,37 @@
 # Laravel Dockerfile
-
-# Use an official PHP runtime as a parent image
-FROM php:8.2-fpm
-
-# Set working directory
+FROM php:8.2-cli
 WORKDIR /var/www
-
-# Install dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
-    zip \
-    unzip
+    zip \   
+    unzip \
+    nodejs \
+    npm \
+    supervisor \
+    libzip-dev
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+RUN docker-php-ext-configure zip
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Get Composer
+
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Copy existing application directory contents
 COPY . /var/www
 
-# Install Laravel dependencies
 RUN composer install
+RUN php artisan storage:link
+WORKDIR /var/www
 
-# Make sure permissions are set correctly
-RUN chown -R www-data:www-data /var/www
+RUN npm install 
+RUN npm run build 
+
+RUN mkdir -p /var/www/storage /var/www/storage/app/public /var/www/storage/framework/sessions /var/www/storage/framework/views /var/www/storage/framework/cache
 RUN chmod -R 755 /var/www/storage
+RUN chown -R www-data:www-data /var/www/storage
 
-# Expose port 9000 and start php-fpm server
-EXPOSE 9000
-CMD ["php-fpm"]
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+EXPOSE 8000
+CMD ["/usr/bin/supervisord"]

@@ -90,7 +90,7 @@ class BatchController extends Controller
     public function processBatch(Request $request, $batchId)
     {
         $batch = Batch::with('cvs')->findOrFail($batchId);
-
+        // dd($batch);
         // Prepare batch data for processing
         $batchData = [
             'batch_id' => $batch->id,
@@ -102,6 +102,7 @@ class BatchController extends Controller
             })->toArray(),
             'user_input' => $request->input('user_input'), // Use user input as processed batch name
         ];
+        // dd($batchData);
 
         // Debugging: Log the batch data being sent to Flask
         Log::debug('Batch data being sent to Flask:', $batchData);
@@ -168,6 +169,7 @@ class BatchController extends Controller
         $safeBatchName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $batch->name);
         $zipFileName = $safeBatchName . '_cvs.zip';
         $zipPath = storage_path('app/public/' . $zipFileName);
+        dd($zipPath);
     
         $zip = new ZipArchive;
     

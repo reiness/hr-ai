@@ -18,6 +18,7 @@ class FlaskApiService
 
     public function processBatch($batch)
     {
+        // dd($batch);
         try {
             $response = $this->client->post('/process', [
                 'json' => $batch,
@@ -25,6 +26,7 @@ class FlaskApiService
 
             if ($response->getStatusCode() == 200) {
                 $result = json_decode($response->getBody()->getContents(), true);
+                // dd($result);
                 Log::debug('Flask API response: ' . json_encode($result));
                 return $result;
             } else {
@@ -44,10 +46,10 @@ class FlaskApiService
                 'json' => $data,
                 'timeout' => 300,
             ]);
-
+    
             if ($response->getStatusCode() == 200) {
-                $result = json_decode($response->getBody()->getContents(), true);
-                Log::debug('Flask API response: ' . json_encode($result));
+                $result = $response->getBody()->getContents();
+                Log::debug('Flask API response: ' . $result);
                 return $result;
             } else {
                 Log::error('Flask API returned an error: ' . $response->getStatusCode());
@@ -58,4 +60,6 @@ class FlaskApiService
             return null;
         }
     }
+    
 }
+

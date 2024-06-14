@@ -7,18 +7,21 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
-
+    volumes:
+      - ./logs:/app/logs
+      - db-data:/var/www/storage/app/public
+    environment:
+      - LARAVEL_STORAGE_BASE=var/www/storage/app/public
 
   laravel-app:
     build:
       context: ./hr-web  # Path LARAVEL
       dockerfile: Dockerfile
     ports:
-      - "9000:9000"
+      - "8000:8000"
     volumes:
       - ./hr-web:/var/www
-
-
+      - db-data:/var/www/storage/app/public
 
 volumes:
-  db_data:
+  db-data:
